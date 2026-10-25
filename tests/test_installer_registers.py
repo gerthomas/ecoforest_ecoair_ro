@@ -5,7 +5,7 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-SCHEMA = ROOT / 'custom_components/ecoforest_ecogeo/registers.py'
+SCHEMA = ROOT / 'custom_components/ecoforest_ecoair_ro/registers.py'
 spec = importlib.util.spec_from_file_location("installer_registers", SCHEMA)
 r = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(r)
@@ -46,7 +46,7 @@ class InstallerRegisterTests(unittest.TestCase):
         self.assertTrue(mapping["dg1_fixed_cooling_supply_temperature"]["disabled_by_default"])
 
     def test_ha_translations_cover_every_entry(self):
-        translations = json.loads((ROOT / "custom_components/ecoforest_ecogeo/translations/en.json").read_text())
+        translations = json.loads((ROOT / "custom_components/ecoforest_ecoair_ro/translations/en.json").read_text())
         sensors = translations["entity"]["sensor"]
         for row in LEDGER["entries"]:
             definition = row["definition"]

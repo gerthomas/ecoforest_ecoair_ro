@@ -13,9 +13,9 @@ import httpx
 ROOT=Path(__file__).resolve().parents[1]
 # Namespace packages bypass HA-only setup imports; the API and dependencies are real.
 for name,path in [('custom_components',ROOT/'custom_components'),
-                  ('custom_components.ecoforest_ecogeo',ROOT/'custom_components/ecoforest_ecogeo')]:
+                  ('custom_components.ecoforest_ecoair_ro',ROOT/'custom_components/ecoforest_ecoair_ro')]:
     package=types.ModuleType(name); package.__path__=[str(path)]; sys.modules[name]=package
-m=importlib.import_module('custom_components.ecoforest_ecogeo.overrides.api')
+m=importlib.import_module('custom_components.ecoforest_ecoair_ro.overrides.api')
 
 class ApiTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):

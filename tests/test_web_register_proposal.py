@@ -5,7 +5,7 @@ from pathlib import Path
 import unittest
 
 ROOT=Path(__file__).resolve().parents[1]
-SCHEMA=ROOT / 'custom_components/ecoforest_ecogeo/registers.py'
+SCHEMA=ROOT / 'custom_components/ecoforest_ecoair_ro/registers.py'
 spec=importlib.util.spec_from_file_location('proposal_registers',SCHEMA)
 r=importlib.util.module_from_spec(spec)
 spec.loader.exec_module(r)
@@ -60,7 +60,7 @@ class WebRegisterProposalTests(unittest.TestCase):
             r.validate_read(dict(idOperacion=2001 if q['data_type']==2 else 2002,dir=q['address'],num=q['length']))
 
     def test_promoted_entities_have_one_canonical_translation(self):
-        translations=json.loads((ROOT/'custom_components/ecoforest_ecogeo/translations/en.json').read_text())
+        translations=json.loads((ROOT/'custom_components/ecoforest_ecoair_ro/translations/en.json').read_text())
         sensors=translations['entity']['sensor']
         self.assertEqual(len(DEFS),len({definition['key'] for definition in DEFS.values()}))
         for definition in DEFS.values():

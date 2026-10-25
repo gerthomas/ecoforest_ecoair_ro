@@ -4,7 +4,7 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-SCHEMA = ROOT / 'custom_components/ecoforest_ecogeo/registers.py'
+SCHEMA = ROOT / 'custom_components/ecoforest_ecoair_ro/registers.py'
 spec = importlib.util.spec_from_file_location('registers_under_test', SCHEMA)
 r = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(r)
