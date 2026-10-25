@@ -66,3 +66,12 @@ Tests use a mock HTTP transport; HA API tests isolate runtime imports and do
 not pretend to validate the HA frontend. They cover transport write rejection,
 response validation, sign/scaling, request coverage, optional failures,
 authentication and required retry exhaustion. Live testing is separate.
+
+## ecoAIR mode (this fork)
+
+`family: ecoair` reads eight whitelisted block operations (2103, 2104, 2108, 2125, 2148, 2149, 2150, 2151), each
+sent as `idOperacion=<n>` with no address or count; `ecoair_registers.py` holds the sensor positions. Operations 2011
+and 2012 (writes) and any other operation are rejected before network I/O. Operation numbers and positions come from
+radutopala/ecoforest_ecoair and are unverified on other models. The model code is read once from operation 2125
+(first five characters); a failure there is fatal, while a failure in any other block only marks its sensors unavailable
+(core blocks 2148, 2149 and 2151 are retried three times). If every block fails the update raises.

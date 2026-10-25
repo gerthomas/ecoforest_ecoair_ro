@@ -1,28 +1,49 @@
-[![SWUbanner](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner-direct-single.svg)](https://stand-with-ukraine.pp.ua/)
+# Ecoforest EcoAir (read-only) for Home Assistant
 
-Read-only Ecoforest EcoGeo heat pump integration PoC (proof of concept, thus may lack features or stability)
+Read-only Ecoforest heat pump integration PoC (proof of concept, thus may lack features or stability).
+It is a fork of [ostracon/ecoforest_ecogeo](https://github.com/ostracon/ecoforest_ecogeo), itself a fork of
+[bytestorm/ecoforest_ecogeo](https://github.com/bytestorm/ecoforest_ecogeo), with an ecoAIR (air-source) mode
+whose block reads and register positions come from
+[radutopala/ecoforest_ecoair](https://github.com/radutopala/ecoforest_ecoair). Credit to all three authors.
+The integration never writes to the heat pump: only whitelisted read requests can leave the client.
 
-See [register coverage and safety](READ_ONLY_REGISTERS.md) for the HP map, diagnostic limitations and offline tests.
+**Status:** the ecoAIR mode has only been tested against simulated responses. Run `tools/probe.py` first
+(below) and check the output matches before relying on the sensors.
 
-To install this integration, add this GitHub Repo to the HACS Custom Repositories or use the button below
+## Install
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ostracon&repository=ecoforest_ecogeo&category=integration)
+1. In HACS, add this repository as a custom repository (category: Integration), install, restart Home Assistant.
+2. Settings -> Devices & Services -> Add integration -> "Ecoforest EcoAir (read-only)".
+3. Fields:
+   - **Ecoforest Easynet URL**: the web address of the gateway, e.g. `http://192.168.1.200/`
+   - **Username**: the heat pump serial number (same as the web interface)
+   - **Password**: the first 8 characters of the original wireless network password (same as the web interface)
+   - **Alias** (optional): used instead of the model name for entity prefixes
+   - **Controller family**: `ecoair` (default) for air-source units, `geo` for the original ecoGEO register map
 
-After installing the integration in HACS
-- Restart Home Assistant
-- Go to "Settings" -> "Devices & Services" -> "Add integration"
-- Look for "Ecoforest Ecogeo" integration to start setting it up
-- For "Ecoforest Easynet URL" use the web interface address of your heat pump (e.g. http://192.168.1.200/)
-- Username is your heat pump serial number (same as its web interface)
-- Password is the first 8 characters of the original wireless network password (same as its web interface)
-- Optionally, you can specify an alias that will be used instead of the model name to generate entity prefixes
+Do not run this at the same time as another Ecoforest integration polling the same gateway.
 
+## Check your unit first
 
-------------
+```
+ECOFOREST_URL=http://192.168.1.200 ECOFOREST_USER=<serial> ECOFOREST_PASSWORD=<first 8 chars> python3 tools/probe.py
+```
+
+The probe uses only the Python standard library, sends only read requests, and prints the raw replies.
+If a block is rejected or the values look wrong, open an issue with the output (remove nothing but your serial number).
+
+## ecoAIR sensors
+
+Outdoor temperature, DHW temperature, heating setpoint, electrical and heating power, COP, compressor
+pressures, unit state, backup heater state, and read-back of the DHW / heating on-off states and DHW setpoints.
+Brine sensors are copied from the ground-source map and are disabled by default; an air unit has no brine loop.
+A block the gateway rejects only makes its own sensors unavailable; the others keep updating.
+
+---
 
 Custom visualization:
 
-![flow](https://github.com/bytestorm/ecoforest_ecogeo/blob/master/flow.png?raw=true)
+![flow](https://github.com/YOUR-GITHUB-USERNAME/ecoforest_ecoair_ro/blob/master/flow.png?raw=true)
 
 <details>
   <summary>Details...</summary>
