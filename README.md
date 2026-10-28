@@ -19,7 +19,7 @@ The integration never writes to the heat pump: only whitelisted read requests ca
    - **Username**: the heat pump serial number (same as the web interface)
    - **Password**: the first 8 characters of the original wireless network password (same as the web interface)
    - **Alias** (optional): used instead of the model name for entity prefixes
-   - **Controller family**: `ecoair` (default) for air-source units, `geo` for the original ecoGEO register map
+   - **Controller family**: `ecoair` (default) reads the documented ecoAIR Modbus table through the register and coil reads that Easynet Geo gateways answer; `geo` is the original ecoGEO register map; `ecoair_blocks` is an experimental mode using block reads that did not work on an Easynet Geo 2.13 gateway
 
 Do not run this at the same time as another Ecoforest integration polling the same gateway.
 
@@ -34,10 +34,14 @@ If a block is rejected or the values look wrong, open an issue with the output (
 
 ## ecoAIR sensors
 
-Outdoor temperature, DHW temperature, heating setpoint, electrical and heating power, COP, compressor
-pressures, unit state, backup heater state, and read-back of the DHW / heating on-off states and DHW setpoints.
-Brine sensors are copied from the ground-source map and are disabled by default; an air unit has no brine loop.
-A block the gateway rejects only makes its own sensors unavailable; the others keep updating.
+The default `ecoair` family exposes 160 read-only sensors from the documented table: temperatures on both units,
+pressures, valve and fan/pump regulation, setpoints, instantaneous heating/cooling/electric power and COP/EER,
+compressor speed and reference, digital inputs and outputs (coils, as 0/1), and annual/monthly energy counters.
+Monthly counters, performance factors and BUS setpoints are disabled by default. Entity ids start with `air_`
+(for example `sensor.<model>_air_outdoor_temperature`, `..._air_electric_power`).
+Energy counters are raw numbers: kWh or MWh depends on the annual-unit coils (203-205).
+Documented oddities: register 3 is labelled a temperature but has unit bar, so it is exposed as an unverified raw measurement.
+A block the gateway rejects is bisected until only the unsupported addresses are unavailable.
 
 ---
 

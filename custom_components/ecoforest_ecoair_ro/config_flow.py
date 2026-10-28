@@ -5,14 +5,14 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from pyecoforest.exceptions import EcoforestAuthenticationRequired
+from pyecoforest.exceptions import EcoforestAuthenticationRequired, EcoforestConnectionError
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME, CONF_ALIAS
 
 from .const import DOMAIN, MANUFACTURER, CONF_FAMILY
-from .overrides.api import make_api, FAMILY_ECOAIR, FAMILY_GEO
+from .overrides.api import make_api, FAMILY_ECOAIR, FAMILY_ECOAIR_BLOCKS, FAMILY_GEO
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Required(CONF_USERNAME): str,
         vol.Required(CONF_PASSWORD): str,
         vol.Optional(CONF_ALIAS): str,
-        vol.Required(CONF_FAMILY, default=FAMILY_ECOAIR): vol.In([FAMILY_ECOAIR, FAMILY_GEO]),
+        vol.Required(CONF_FAMILY, default=FAMILY_ECOAIR): vol.In([FAMILY_ECOAIR, FAMILY_GEO, FAMILY_ECOAIR_BLOCKS]),
     }
 )
 
@@ -50,9 +50,12 @@ class EcoForestEcoGeoConfigFlow(ConfigFlow, domain=DOMAIN):
                 device = await api.get()
             except EcoforestAuthenticationRequired:
                 errors["base"] = "invalid_auth"
+            except EcoforestConnectionError as err:
+                _LOGGER.warning("Could not read the heat pump: %s (cause: %r)", err, err.__cause__)
+                errors["base"] = "cannot_connect"
             except Exception:
                 _LOGGER.exception("Unexpected exception")
-                errors["base"] = "cannot_connect"
+                errors["base"] = "unknown"
             else:
                 device_id = device.model_name
                 title = f"{MANUFACTURER} {device.model_name}"

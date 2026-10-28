@@ -12,6 +12,7 @@ from pyecoforest.exceptions import EcoforestAuthenticationRequired, EcoforestCon
 from datetime import datetime, timezone
 from ..registers import (hp_mapping, read_requests, split_optional_request, decode,
                          validate_read, parse_read, signed_integer)
+from ..ecoair_map import ecoair_register_mapping
 from ..ecoair_registers import (ECOAIR_MAPPING, ECOAIR_MODEL_OPERATION, ECOAIR_POLL_OPERATIONS,
                                 ECOAIR_CORE_OPERATIONS, validate_ecoair_read, parse_ecoair_read,
                                 decode_ecoair, model_name as ecoair_model_name)
@@ -159,6 +160,7 @@ class EcoGeoApi(EcoforestApi):
     def __init__(self, host: str, user: str, password: str) -> None:
         super().__init__(host, httpx.BasicAuth(user, password))
         self.mapping = _DOMESTIC_MAPPING
+        self._family_mapping = None  # set by subclasses that bring their own register map
         self._model_name = None
         self._lock = asyncio.Lock()
 
@@ -194,8 +196,11 @@ class EcoGeoApi(EcoforestApi):
             if any(n < 0 or n >= len(symbols) for n in codes):
                 raise EcoforestConnectionError('Invalid Ecoforest model code')
             self._model_name = ''.join(symbols[n] for n in codes)
-            self.mapping = _HP_MAPPING if self._model_name in HP_MODELS else _DOMESTIC_MAPPING
-        is_hp = self._model_name in HP_MODELS
+            if self._family_mapping is not None:
+                self.mapping = self._family_mapping
+            else:
+                self.mapping = _HP_MAPPING if self._model_name in HP_MODELS else _DOMESTIC_MAPPING
+        is_hp = self._family_mapping is not None or self._model_name in HP_MODELS
         if is_hp:
             requests = read_requests(self.mapping)
         else:
@@ -228,6 +233,8 @@ class EcoGeoApi(EcoforestApi):
                         raise
             # Keep requests sequential and avoid hammering the controller.
             await asyncio.sleep(0.05)
+        if not state[1] and not state[2]:
+            raise EcoforestConnectionError('No register block could be read')
         values = {}
         raw_values = {}
         for key, definition in self.mapping.items():
@@ -265,8 +272,18 @@ class EcoGeoApi(EcoforestApi):
 # ecoAIR (air-source) client: read-only block reads, one operation per request
 # ---------------------------------------------------------------------------
 
-FAMILY_ECOAIR = "ecoair"
+FAMILY_ECOAIR = "ecoair"            # documented ecoAIR table over register/coil reads
+FAMILY_ECOAIR_BLOCKS = "ecoair_blocks"  # experimental block reads (newer firmware only)
 FAMILY_GEO = "geo"
+
+
+class EcoAirRegisterApi(EcoGeoApi):
+    """ecoAIR sensors read with the register/coil reads the gateway already supports."""
+
+    def __init__(self, host: str, user: str, password: str) -> None:
+        super().__init__(host, user, password)
+        self._family_mapping = ecoair_register_mapping()
+        self.mapping = self._family_mapping
 
 
 class EcoAirReadOnlyApi(EcoGeoApi):
@@ -338,5 +355,7 @@ class EcoAirReadOnlyApi(EcoGeoApi):
 def make_api(host: str, user: str, password: str, family: str = FAMILY_GEO):
     """Return the client for the configured controller family."""
     if family == FAMILY_ECOAIR:
+        return EcoAirRegisterApi(host, user, password)
+    if family == FAMILY_ECOAIR_BLOCKS:
         return EcoAirReadOnlyApi(host, user, password)
     return EcoGeoApi(host, user, password)

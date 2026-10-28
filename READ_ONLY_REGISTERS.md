@@ -69,9 +69,13 @@ authentication and required retry exhaustion. Live testing is separate.
 
 ## ecoAIR mode (this fork)
 
-`family: ecoair` reads eight whitelisted block operations (2103, 2104, 2108, 2125, 2148, 2149, 2150, 2151), each
-sent as `idOperacion=<n>` with no address or count; `ecoair_registers.py` holds the sensor positions. Operations 2011
-and 2012 (writes) and any other operation are rejected before network I/O. Operation numbers and positions come from
-radutopala/ecoforest_ecoair and are unverified on other models. The model code is read once from operation 2125
-(first five characters); a failure there is fatal, while a failure in any other block only marks its sensors unavailable
-(core blocks 2148, 2149 and 2151 are retried three times). If every block fails the update raises.
+`family: ecoair` (default) uses `ecoair_map.py`, built from the documented ecoAIR Modbus table: 77 analog registers
+(signed tenths), 50 integers and 33 coils, read with the same 2001/2002 transport, block grouping and bisecting as the
+other maps. The same addresses mean different things on the ground-source HP map (for example address 30 is a fan
+regulation here and a brine pump regulation there), which is why it has its own map. The model code is read from 5323
+as before. Every definition is optional; if nothing at all can be read the update raises.
+
+`family: ecoair_blocks` is an experimental client for newer firmware: it reads eight whitelisted block operations
+(2103, 2104, 2108, 2125, 2148, 2149, 2150, 2151), each sent as `idOperacion=<n>`. Operations 2011 and 2012 (writes) and
+any other operation are rejected before network I/O. Its register positions come from radutopala/ecoforest_ecoair and
+are unverified; it did not connect to an Easynet Geo 2.13 gateway.

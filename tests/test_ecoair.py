@@ -101,7 +101,7 @@ class ApiTests(unittest.IsolatedAsyncioTestCase):
         self.rejected = set()
         self.status = 200
         self.blocks = fake_blocks()
-        self.api = self.m.make_api('http://example.invalid', 'u', 'p', 'ecoair')
+        self.api = self.m.make_api('http://example.invalid', 'u', 'p', 'ecoair_blocks')
         self.api._client.post = self.post
         self.sleep = patch.object(self.m.asyncio, 'sleep', new=AsyncMock())
         self.sleep.start()
